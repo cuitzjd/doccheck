@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Secrets and local configuration
+.env
+config.local.yaml
+
+# User documents and generated runtime data
+workdir/
+backups/
+reports/
+*.doc
+*.docx
+*.pdf
+*.xlsx
+*.json
+!tests/*.json
+
+# Analysis/editor/system artifacts
+graphify-out/
+.DS_Store
+.idea/
+.vscode/
+
