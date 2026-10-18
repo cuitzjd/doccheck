@@ -47,7 +47,7 @@ def _has_tesseract() -> bool:
     try:
         out = subprocess.run([exe, "--list-langs"], capture_output=True,
                              text=True, timeout=20)
-        return "chi_sim" in out.stdout
+        return out.returncode == 0 and "chi_sim" in out.stdout
     except Exception:
         return False
 
@@ -102,9 +102,13 @@ def _ocr_image(backend: str, img: str, vision_bin: str = "") -> str:
     if backend == "tesseract":
         out = subprocess.run(["tesseract", img, "stdout", "-l", "chi_sim"],
                              capture_output=True, text=True, timeout=300)
-        return out.stdout
-    out = subprocess.run([vision_bin, img], capture_output=True, text=True,
-                         timeout=300)
+    else:
+        out = subprocess.run([vision_bin, img], capture_output=True, text=True,
+                             timeout=300)
+    if out.returncode != 0:
+        detail = (out.stderr or out.stdout or "").strip()
+        suffix = f": {detail}" if detail else ""
+        raise RuntimeError(f"{backend} OCR failed with exit code {out.returncode}{suffix}")
     return out.stdout
 
 

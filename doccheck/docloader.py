@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 
 from .models import Paragraph, UnifiedDoc
+from .docx_paragraphs import iter_docx_paragraphs
 
 DOC_TYPE_PREFIX = re.compile(r"^【(?:\d+-)?([^】]+)】")
 
@@ -76,16 +77,19 @@ def _resolve_fonts(d, para, run):
             size = st.font.size.pt
         st = getattr(st, "base_style", None)
     # 文档默认
-    try:
-        ddf = d.styles.element.xpath("./w:docDefaults/w:rPrDefault/w:rPr")[0]
+    defaults = d.styles.element.xpath("./w:docDefaults/w:rPrDefault/w:rPr")
+    if defaults:
+        ddf = defaults[0]
         rf = ddf.rFonts
         if rf is not None:
             font_cn = font_cn or rf.get(_W + "eastAsia")
             font_en = font_en or rf.get(_W + "ascii")
         if size is None and ddf.sz is not None:
-            size = int(ddf.sz.get(_W + "val")) / 2
-    except Exception:
-        pass
+            raw_size = ddf.sz.get(_W + "val")
+            try:
+                size = int(raw_size) / 2
+            except (TypeError, ValueError):
+                pass
     return font_cn or "", font_en or "", size or 0.0
 
 
@@ -152,31 +156,9 @@ def _load_docx(doc: UnifiedDoc):
     d = docx.Document(doc.path)
     page = 1
     idx = 0
-    body = d.element.body
-    # 段落与表格按文档顺序遍历（表格单元格文本也纳入标点检查）
-    import docx.table
-    import docx.text.paragraph
-    for child in body.iterchildren():
-        if child.tag == _W + "p":
-            para = docx.text.paragraph.Paragraph(child, d)
-            idx = _emit_docx_para(doc, d, para, idx, page)
-            page += len(child.xpath(".//w:br[@w:type='page']"))
-            if child.xpath(".//w:lastRenderedPageBreak"):
-                page += len(child.xpath(".//w:lastRenderedPageBreak"))
-        elif child.tag == _W + "tbl":
-            tbl = docx.table.Table(child, d)
-            for row in tbl.rows:
-                for cell in row.cells:
-                    for para in cell.paragraphs:
-                        idx = _emit_docx_para(doc, d, para, idx, page, in_table=True)
-    # 文本框（w:txbxContent，如封面/落款浮动框）内容补收，避免漏检
-    seen = {p.text for p in doc.paragraphs}
-    for p_el in body.xpath(".//w:txbxContent/w:p"):
-        para = docx.text.paragraph.Paragraph(p_el, d)
-        text = para.text.strip()
-        if text and text not in seen:
-            idx = _emit_docx_para(doc, d, para, idx, page)
-            seen.add(text)
+    for item in iter_docx_paragraphs(d):
+        idx = _emit_docx_para(doc, d, item.paragraph, idx, page, item.in_table)
+        page += item.page_breaks
     doc.page_count = page  # 估算值；精确页数以配对 PDF 为准
     # 分节/页脚域代码信息（供 PAGE-03/05 结构检查）
     doc.meta["sections"] = len(d.sections)

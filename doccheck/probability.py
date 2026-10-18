@@ -33,6 +33,24 @@ _SPLIT_PERCENT_RE = re.compile(
     r"乙方\s*[0-9一二三四五六七八九十]+\s*(?:的金额|金额|比例)")
 _MEMORY_RULE_PREFIXES = ("CONTRACT-", "IDENTITY-", "STAGE-")
 
+_SCORE_FLOOR = 0.02
+_SCORE_CEILING = 0.98
+_CONTEXT_SCORE_CAPS = {"exempt": 0.12, "consistent": 0.15, "insufficient": 0.64}
+_CONFLICT_SCORE_FLOOR = 0.92
+_PUNCTUATION_SCORES = {
+    "PUNC-01": (0.97, "同一片段出现连续重复标点，属于可直接核验的文本错误"),
+    "PUNC-02": (0.94, "出现句首或相邻多余标点，属于可直接核验的文本错误"),
+    "PUNC-03": (0.68, "段末缺少终止符，但条目、引用和排版语境仍可能合法"),
+    "PUNC-04": (0.89, "中文语境出现半角标点，且已排除主要代码/版本号场景"),
+    "PUNC-05": (0.71, "检测到重复字词，但少量中文叠词或专名仍可能是合法写法"),
+}
+_FORMAT_SCORES = {
+    "FORMAT-01": (0.73, "正文与文档主流字体/字号不一致，较可能是格式错误，但需确认模板要求"),
+    "FORMAT-02": (0.76, "同级标题格式与多数标题不一致，较可能是排版错误"),
+    "FORMAT-03": (0.64, "段落行距或缩进偏离主流，可能是格式错误，也可能是特殊段落样式"),
+    "FORMAT-04": (0.93, "章节、图表或多级编号出现可核验的重复/跳号"),
+}
+
 
 def _config(cfg):
     cfg = cfg or {}
@@ -106,7 +124,7 @@ def _signals(issue, doc):
 
 
 def _score(value):
-    return round(max(0.02, min(0.98, value)), 2)
+    return round(max(_SCORE_FLOOR, min(_SCORE_CEILING, value)), 2)
 
 
 def _heuristic_score_base(issue, doc, cfg=None):
@@ -184,15 +202,8 @@ def _heuristic_score_base(issue, doc, cfg=None):
         return 0.62, "出现身份表述问题，但缺少同句角色绑定，需人工结合上下文判断"
 
     # 标点/重复字是局部、可验证的文本证据；段末句号和重复词仍保留一定不确定性。
-    punctuation_scores = {
-        "PUNC-01": (0.97, "同一片段出现连续重复标点，属于可直接核验的文本错误"),
-        "PUNC-02": (0.94, "出现句首或相邻多余标点，属于可直接核验的文本错误"),
-        "PUNC-03": (0.68, "段末缺少终止符，但条目、引用和排版语境仍可能合法"),
-        "PUNC-04": (0.89, "中文语境出现半角标点，且已排除主要代码/版本号场景"),
-        "PUNC-05": (0.71, "检测到重复字词，但少量中文叠词或专名仍可能是合法写法"),
-    }
-    if rid in punctuation_scores:
-        probability, reason = punctuation_scores[rid]
+    if rid in _PUNCTUATION_SCORES:
+        probability, reason = _PUNCTUATION_SCORES[rid]
         paragraph = _paragraph_for_issue(doc, issue)
         if rid == "PUNC-03" and paragraph is not None:
             if (getattr(paragraph, "is_heading", False) or
@@ -215,14 +226,8 @@ def _heuristic_score_base(issue, doc, cfg=None):
             reason += "；同时处于引用/资料语境，概率下调"
         return _score(probability), reason
 
-    format_scores = {
-        "FORMAT-01": (0.73, "正文与文档主流字体/字号不一致，较可能是格式错误，但需确认模板要求"),
-        "FORMAT-02": (0.76, "同级标题格式与多数标题不一致，较可能是排版错误"),
-        "FORMAT-03": (0.64, "段落行距或缩进偏离主流，可能是格式错误，也可能是特殊段落样式"),
-        "FORMAT-04": (0.93, "章节、图表或多级编号出现可核验的重复/跳号"),
-    }
-    if rid in format_scores:
-        probability, reason = format_scores[rid]
+    if rid in _FORMAT_SCORES:
+        probability, reason = _FORMAT_SCORES[rid]
         diff_count = len(re.findall(r"≠|不一致|偏离", issue.expected or ""))
         if diff_count:
             probability += min(0.12, (diff_count - 1) * 0.04)
@@ -493,15 +498,15 @@ def _validated_score(issue, doc, cfg=None):
     score, reason = _heuristic_score_base(issue, doc, cfg)
     relation = evidence["validation"]["relation"]
     if relation == "exempt":
-        score = min(score, 0.12)
+        score = min(score, _CONTEXT_SCORE_CAPS["exempt"])
     elif relation == "consistent":
-        score = min(score, 0.15)
+        score = min(score, _CONTEXT_SCORE_CAPS["consistent"])
     elif relation == "conflict":
-        score = max(score, 0.92 if issue.rule_id.startswith(("CONTRACT-", "IDENTITY-"))
+        score = max(score, _CONFLICT_SCORE_FLOOR if issue.rule_id.startswith(("CONTRACT-", "IDENTITY-"))
                     else min(0.98, score + 0.02))
     elif relation == "insufficient" and issue.rule_id.startswith(_MEMORY_RULE_PREFIXES):
         # 没有长期基准或没有命中当前句时，只能给出待复核概率，不能把规则命中当成结论。
-        score = min(score, 0.64)
+        score = min(score, _CONTEXT_SCORE_CAPS["insufficient"])
     return _score(score), _memory_summary(evidence) + "。" + reason, evidence
 
 
@@ -588,13 +593,14 @@ def _merge_jev_probability(model_probability, local_probability, issue):
     model_probability = _score(model_probability)
     local_probability = _score(local_probability)
     if relation == "exempt":
-        return min(model_probability, 0.12)
+        return min(model_probability, _CONTEXT_SCORE_CAPS["exempt"])
     if relation == "consistent":
-        return min(model_probability, 0.15)
+        return min(model_probability, _CONTEXT_SCORE_CAPS["consistent"])
     if relation == "conflict":
-        return max(model_probability, local_probability, 0.92)
+        return max(model_probability, local_probability, _CONFLICT_SCORE_FLOOR)
     if relation == "insufficient" and issue.rule_id.startswith(_MEMORY_RULE_PREFIXES):
-        return _score(min(0.64, (model_probability + local_probability) / 2))
+        return _score(min(_CONTEXT_SCORE_CAPS["insufficient"],
+                         (model_probability + local_probability) / 2))
     return model_probability
 
 

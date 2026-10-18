@@ -14,6 +14,7 @@ import time
 from dataclasses import dataclass, field
 
 from .config import load_config
+from .docx_paragraphs import iter_docx_paragraphs
 from .models import IssueStatus
 
 _W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
@@ -39,21 +40,9 @@ class FixResult:
 # ---------------- docx 段落定位（与 docloader 枚举顺序一致） ----------------
 
 def _iter_paragraphs(d):
-    """按文档顺序产出非空段落（正文 + 表格单元格），与 docloader 一致。"""
-    import docx.table
-    import docx.text.paragraph
-    for child in d.element.body.iterchildren():
-        if child.tag == _W + "p":
-            p = docx.text.paragraph.Paragraph(child, d)
-            if p.text.strip():
-                yield p
-        elif child.tag == _W + "tbl":
-            tbl = docx.table.Table(child, d)
-            for row in tbl.rows:
-                for cell in row.cells:
-                    for p in cell.paragraphs:
-                        if p.text.strip():
-                            yield p
+    """按加载器相同的顺序产出正文、表格和文本框段落。"""
+    for item in iter_docx_paragraphs(d):
+        yield item.paragraph
 
 
 def _paragraph_by_index(d, idx: int):
@@ -230,14 +219,11 @@ def _fix_font(d, issue, cfg):
         if size:
             r.font.size = docx.shared.Pt(float(size))
     if targets_style is not None:
-        try:
-            if font_cn:
-                targets_style.element.get_or_add_rPr().get_or_add_rFonts().set(
-                    _W + "eastAsia", font_cn)
-            if size:
-                targets_style.font.size = docx.shared.Pt(float(size))
-        except Exception:
-            pass
+        if font_cn:
+            targets_style.element.get_or_add_rPr().get_or_add_rFonts().set(
+                _W + "eastAsia", font_cn)
+        if size:
+            targets_style.font.size = docx.shared.Pt(float(size))
     return True, f"字体统一为 {font_cn or '-'} / {font_en or '-'} / {size or '-'} 磅"
 
 
