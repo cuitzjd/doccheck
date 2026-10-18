@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}上传与基准确认{% endblock %}
+{% block content %}
+{% if msg %}<div class="alert alert-warn">{{ msg }}</div>{% endif %}
+
+<div class="card">
+  <h2>① 导入待检文档</h2>
+  <div class="row">
+    <input type="file" id="uploadInput" multiple accept=".doc,.docx,.pdf">
+    <button class="btn" id="uploadBtn">上传文件</button>
+    <span class="sep"></span>
+    <input type="text" id="folderPath" class="input-wide" placeholder="或输入本地文件夹路径，如 /Users/…/文档目录">
+    <button class="btn" id="importFolderBtn">批量导入</button>
+  </div>
+  <div class="msg" id="uploadMsg"></div>
+  <table class="tbl" id="fileTable">
+    <thead><tr><th>文件名</th><th>文档类型</th><th>格式</th><th>大小</th><th>操作</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>② 合同基准信息</h2>
+  <div class="row">
+    <button class="btn" id="extractBtn">识别合同</button>
+    <span class="hint">从文件列表中自动查找文件名含“合同”的文件，抽取关键信息（扫描件 OCR 可能耗时数十秒）</span>
+  </div>
+  <div class="msg" id="extractMsg"></div>
+  <table class="tbl tbl-form" id="contractTable">
+    <tbody>
+      <tr><th>项目名称</th><td><input type="text" data-field="project_name" class="input-full"></td></tr>
+      <tr><th>建设单位</th><td><input type="text" data-field="employer" class="input-full"></td></tr>
+      <tr><th>承建单位</th><td><div data-list="contractors"></div>
+        <button class="btn btn-sm" data-add="contractors">+ 添加承建单位</button></td></tr>
+      <tr><th>监理单位</th><td><input type="text" data-field="supervisor" class="input-full"></td></tr>
+      <tr><th>合同金额（数字）</th><td><input type="text" data-field="amount_number" class="input-full"></td></tr>
+      <tr><th>合同金额（大写）</th><td><input type="text" data-field="amount_cn" class="input-full"></td></tr>
+      <tr><th>付款条件</th><td><div data-list="payment_terms"></div>
+        <button class="btn btn-sm" data-add="payment_terms">+ 添加付款条件</button></td></tr>
+      <tr><th>服务期限</th><td><input type="text" data-field="service_period" class="input-full"></td></tr>
+      <tr><th>合同编号</th><td><input type="text" data-field="contract_no" class="input-full"></td></tr>
+    </tbody>
+  </table>
+  <div class="hint">黄色行为 OCR 低置信字段，请重点核对；识别失败时可直接手工录入。</div>
+</div>
+
+<div class="card">
+  <h2>③ 项目时间线</h2>
+  <div class="row">
+    <label>合同签订日 <input type="date" id="tl_signed"></label>
+    <label>开工令日期 <input type="date" id="tl_workorder"></label>
+    <label>上线日期 <input type="date" id="tl_online"> <span class="hint">留空 = 未上线</span></label>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row">
+    <button class="btn btn-primary" id="confirmBtn">确认基准信息</button>
+    <span class="msg" id="confirmMsg"></span>
+  </div>
+  <div class="hint">确认后写入 config.yaml 作为本轮检查基准，并解锁页面2「检查与确认」。</div>
+</div>
+{% endblock %}
