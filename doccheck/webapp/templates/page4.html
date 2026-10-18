@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}工具箱{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>盖章 PDF 首页署名</h2>
+  <div class="row">
+    <input type="file" id="stampFiles" multiple accept=".pdf">
+    <button class="btn" id="stampUploadBtn">上传 PDF</button>
+  </div>
+  <div class="file-chips" id="stampFileList"></div>
+  <div class="row">
+    <label>署名内容（每行一个单位）<br>
+      <textarea id="stampLines" rows="3" class="input-wide" placeholder="广东省城乡规划设计研究院科技集团股份有限公司&#10;广州赋安数字科技有限公司"></textarea></label>
+    <label>字号 <input type="number" id="stampSize" value="14" min="8" max="72"></label>
+    <label>位置
+      <select id="stampPos">
+        <option value="bottom_center">底部居中</option>
+        <option value="bottom_left">底部居左</option>
+        <option value="custom">自定义坐标</option>
+      </select></label>
+    <span id="stampXY" style="display:none">
+      <label>X <input type="number" id="stampX" value="100"></label>
+      <label>Y <input type="number" id="stampY" value="60"></label>
+    </span>
+  </div>
+  <div class="row">
+    <button class="btn" id="stampPreviewBtn">预览</button>
+    <button class="btn btn-primary" id="stampApplyBtn">批量添加</button>
+  </div>
+  <div class="msg" id="stampMsg"></div>
+  <div id="stampPreview"></div>
+  <div id="stampResult"></div>
+</div>
+
+<div class="card">
+  <h2>格式转换</h2>
+  <div class="row">
+    <input type="file" id="convFile" accept=".doc,.docx,.pdf">
+    <select id="convMode">
+      <option value="pdf2word">PDF → Word</option>
+      <option value="word2pdf">Word → PDF</option>
+      <option value="doc2docx">.doc → .docx</option>
+    </select>
+    <label id="ocrBox"><input type="checkbox" id="forceOcr"> 强制 OCR（扫描件）</label>
+    <button class="btn btn-primary" id="convBtn">开始转换</button>
+  </div>
+  <div class="hint">PDF→Word 会自动检测文本层，无文本层时走 OCR 转换，耗时较长。</div>
+  <div class="msg" id="convMsg"></div>
+  <div id="convResult"></div>
+</div>
+
+<div class="card">
+  <h2>指引册生成</h2>
+  <div class="row">
+    <button class="btn" id="guideDocBtn">生成文档指引册</button>
+    <button class="btn" id="guideBriefBtn">生成汇报材料指引册</button>
+  </div>
+  <div class="hint">基于当前已导入文档生成，输出到 workdir/reports/。</div>
+  <div class="msg" id="guideMsg"></div>
+  <div id="guideResult"></div>
+</div>
+
+<div class="card">
+  <h2>检查报告导出</h2>
+  <div class="row">
+    <button class="btn" id="toolExportExcel">导出 Excel</button>
+    <button class="btn" id="toolExportJson">导出 JSON</button>
+    <span class="hint" id="exportHint"></span>
+  </div>
+  <div class="msg" id="exportMsg"></div>
+  <div id="exportResult"></div>
+</div>
+{% endblock %}
