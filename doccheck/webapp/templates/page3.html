@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}修复结果{% endblock %}
+{% block content %}
+<div class="card" id="emptyPanel" style="display:none">
+  <h2>修复结果</h2>
+  <p class="hint">暂无修复记录。请先在页面2执行检查、判定问题并点击「修复选中问题」。</p>
+</div>
+
+<div id="resultPanel" style="display:none">
+  <div class="card">
+    <h2>修复结果 <span class="hint" id="fixTime"></span></h2>
+    <div class="statbar" id="fixStat"></div>
+    <table class="tbl" id="fixTable">
+      <thead><tr><th>问题编号</th><th>结果</th><th>原因</th><th>修复前后对照</th><th>备份文件</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="card" id="manualCard" style="display:none">
+    <h2>需人工处理（不可自动修复）</h2>
+    <table class="tbl" id="manualTable">
+      <thead><tr><th>问题编号</th><th>规则</th><th>文档</th><th>定位</th><th>建议</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>操作</h2>
+    <div class="row">
+      <span id="downloadLinks"></span>
+      <button class="btn" id="exportExcelBtn">导出检查报告 Excel</button>
+      <button class="btn" id="exportJsonBtn">导出 JSON</button>
+      <button class="btn btn-danger" id="rollbackBtn">一键回滚</button>
+    </div>
+    <div class="msg" id="opMsg"></div>
+  </div>
+</div>
+{% endblock %}
