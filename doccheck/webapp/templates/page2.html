@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}检查与问题确认{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>① 执行检查</h2>
+  <div class="row">
+    <button class="btn btn-primary" id="startCheckBtn">开始检查</button>
+    <span class="hint">对已导入的全部文档执行全部规则</span>
+  </div>
+  <div class="progress-wrap" id="progressWrap" style="display:none">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text"><span id="progressPct">0%</span>
+      <span id="progressLabel"></span>
+      <span id="progressCount"></span></div>
+  </div>
+  <div class="msg" id="checkMsg"></div>
+</div>
+
+<div class="card" id="issuePanel" style="display:none">
+  <h2>② 问题清单</h2>
+  <div class="statbar" id="statBar"></div>
+  <div class="row">
+    <label><input type="checkbox" id="highOnly" checked> 仅看高级别</label>
+    <label>排序 <select id="sortMode">
+      <option value="prob_desc">错误概率：高到低</option>
+      <option value="prob_asc">错误概率：低到高</option>
+      <option value="severity">严重程度</option>
+      <option value="category">问题分类</option>
+      <option value="rule">规则类型</option>
+      <option value="document">文档位置</option>
+    </select></label>
+    <span class="sep"></span>
+    <span class="hint">点击大类/规则行展开；分组行按钮可整组批量判定</span>
+  </div>
+  <div class="bulk-tools" id="bulkTools">
+    <strong>批量判定</strong>
+    <label>分类 <select id="bulkCategory"><option value="">全部</option></select></label>
+    <label>规则 <select id="bulkRule"><option value="">全部</option></select></label>
+    <label>概率 ≥ <input id="bulkMinProb" type="number" min="0" max="100" step="1" placeholder="0">%</label>
+    <label>概率 ≤ <input id="bulkMaxProb" type="number" min="0" max="100" step="1" placeholder="100">%</label>
+    <label><input type="checkbox" id="pendingOnly" checked> 仅待判定</label>
+    <button class="btn btn-sm" id="bulkYesBtn">标为是问题</button>
+    <button class="btn btn-sm" id="bulkNoBtn">标为误报</button>
+    <button class="btn btn-sm" id="bulkIgnoreBtn">标为忽略</button>
+  </div>
+  <div id="issueList"></div>
+</div>
+
+<div class="card" id="fixPanel" style="display:none">
+  <h2>③ 修复</h2>
+  <div class="row">
+    <button class="btn btn-primary" id="fixBtn">修复选中问题</button>
+    <span class="hint">仅修复判定为“是问题”且支持自动修复的条目</span>
+  </div>
+  <div class="msg" id="fixMsg"></div>
+  <div id="manualList"></div>
+</div>
+
+<div class="modal-mask" id="ctxModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="ctxTitle">问题上下文</span>
+      <button class="modal-close" id="ctxClose">×</button>
+    </div>
+    <div class="modal-body">
+      <dl class="body ctx-info" id="ctxInfo"></dl>
+      <div id="ctxContent" class="ctx-content">加载中…</div>
+    </div>
+    <div class="modal-foot">
+      <div class="judge-btns" id="ctxJudge">
+        <button data-st="是问题">是问题</button>
+        <button data-st="误报">误报</button>
+        <button data-st="忽略">忽略</button>
+      </div>
+      <span class="hint" id="ctxHint">判定后自动跳到下一条待判定问题</span>
+    </div>
+  </div>
+</div>
+{% endblock %}
