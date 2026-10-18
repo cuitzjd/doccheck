@@ -36,6 +36,12 @@ python -m pip install -r requirements.txt
 ./run.sh
 ```
 
+需要可复现的运行环境时，可使用已验证版本锁定文件：
+
+```bash
+python -m pip install -r requirements.lock
+```
+
 启动后打开 <http://127.0.0.1:8600>。
 
 也可以直接运行：
@@ -76,6 +82,9 @@ export JEV_ENABLED="true"
 python tests/test_page_rules.py
 python tests/test_probability_heuristic.py
 python tests/test_typesafe_adapter.py
+
+# 安装 requirements-dev.txt 后运行全部 pytest 测试
+python -m pytest -q
 ```
 
 测试使用合成数据，不依赖个人合同或本机文档目录。
