@@ -1,0 +1,58 @@
+project:
+  name: ""
+contract:
+  confirmed: false
+  project_name: ""
+  employer: ""
+  contractors: []
+  supervisor: ""
+  amount_number: ""
+  amount_cn: ""
+  payment_terms: []
+  service_period: ""
+  contract_no: ""
+timeline:
+  contract_signed: ""
+  work_order: ""
+  system_online: ""
+  acceptance_nodes: {}
+stage_wording:
+  blacklist:
+  - 系统已上线
+  - 上线运行
+  - 正式投入使用
+  - 投入使用
+  - 系统使用正常
+  - 用户使用正常
+  - 用户正常使用
+  - 运行稳定
+  - 对外提供服务
+  - 系统运行正常
+  - 顺利上线
+  - 成功上线
+  - 顺利投入使用
+  whitelist:
+  - 内部测试正常
+  - 内部测试通过
+  - 功能开发完成
+  - 内部联调完成
+  - 测试环境运行正常
+  review:
+  - 试运行
+jev:
+  enabled: true
+  base_url: https://api.typesafe.ai/v1
+  model: jev-latest
+  timeout: 20
+  batch_size: 12
+format_baseline:
+  body_font_cn: ""
+  body_font_en: ""
+  body_font_size: ""
+  heading_styles: {}
+punctuation:
+  paragraph_terminators: 。；：？！”）】…
+legacy_keywords: []
+output:
+  backup_dir: backups
+  report_dir: reports
