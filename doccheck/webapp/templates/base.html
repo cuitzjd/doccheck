@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}文稿检查系统{% endblock %} - 文稿检查系统</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-page="{{ page }}">
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">文稿检查系统</div>
+    <nav class="nav">
+      <a href="{{ url_for('page1') }}" class="{{ 'active' if page=='p1' }}">1 上传与基准</a>
+      {% if contract_confirmed %}
+      <a href="{{ url_for('page2') }}" class="{{ 'active' if page=='p2' }}">2 检查与确认</a>
+      {% else %}
+      <span class="nav-disabled" title="请先在页面1确认合同基准信息">2 检查与确认（未解锁）</span>
+      {% endif %}
+      <a href="{{ url_for('page3') }}" class="{{ 'active' if page=='p3' }}">3 修复结果</a>
+      <a href="{{ url_for('page4') }}" class="{{ 'active' if page=='p4' }}">工具箱</a>
+    </nav>
+  </div>
+</header>
+{% if core_missing %}
+<div class="core-warn">核心模块尚未就绪：{{ core_missing|join('、') }}。相关功能暂不可用，界面其余功能正常。</div>
+{% endif %}
+<main class="container">
+{% block content %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
